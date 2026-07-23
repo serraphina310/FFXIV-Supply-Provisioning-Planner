@@ -4,7 +4,7 @@
 
    > 推薦存進最愛或書籤列
 
-2. 打開網頁檔後，點擊「更新物品資料」（如圖）<img src="C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724052435162.png" alt="image-20260724052435162" style="zoom:100%;" />
+2. 打開網頁檔後，點擊「更新物品資料」（如圖）![image-20260724052435162](assets/image-20260724052435162.png)
 
 3. 建立籌備清單
 
@@ -16,19 +16,19 @@
 
    3. 加入後可以從右邊的「目前籌備目標」區塊，看到準備製作的道具清單。
 
-   ![image-20260724052819769](C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724052819769.png)
+   ![image-20260724052819769](assets/image-20260724052819769.png)
 
-   ![image-20260724053308038](C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724053308038.png)
+   ![image-20260724053308038](assets/image-20260724053308038.png)
 
-   ![image-20260724053324782](C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724053324782.png)
+   ![image-20260724053324782](assets/image-20260724053324782.png)
 
 4. 「材料取得清單」可以快速閱覽包含加工品與完成品究竟需要哪些材料，不需要特別採集的水晶可以先全部打勾。
 
-   ![image-20260724053933116](C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724053933116.png)
+   ![image-20260724053933116](assets/image-20260724053933116.png)
 
 5. 接著來到「地圖路線」。因為作者個人習慣緣故，基本上都是從海都出發，所以整個地圖路線的設計是從海都開始一路採集能夠最省傳送費。有限時材料的情況，會在材料出現的實際時間5分鐘前跑道最上面。全部材料都已採集並被勾選的地圖則會掉到最下面。
 
-   ![image-20260724054238480](C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724054238480.png)
+   ![image-20260724054238480](assets/image-20260724054238480.png)
 
 6. 採集完成後就可以進入「加工流程」了
 
@@ -38,7 +38,7 @@
    4. 進入求解頁面按開始求解，然後到匯出頁面點擊複製巨集
    5. 再進入遊戲中的巨集管理介面，建立/修改你的製作巨集
 
-   ![image-20260724054356028](C:\Users\serra\AppData\Roaming\Typora\typora-user-images\image-20260724054356028.png)
+   ![image-20260724054356028](assets/image-20260724054356028.png)
 
 7. 開始製作，敲敲敲。把加工流程頁面的東西都敲完就結束囉(`・ω・´)！
 
