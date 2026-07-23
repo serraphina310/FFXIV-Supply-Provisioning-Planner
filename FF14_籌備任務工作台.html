@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>FF14 籌備任務工作台</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg:#0e1118; --panel:#171c27; --panel2:#202737; --line:#303a4f;
+      --text:#eef2ff; --muted:#9aa7bd; --gold:#e8c16a; --cyan:#63d6d1;
+      --blue:#7aa2ff; --red:#ff7b8b; --green:#79d39b; --shadow:0 16px 44px #0007;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(circle at 15% -10%,#26314a 0,transparent 35%),var(--bg);color:var(--text);font-family:Inter,"Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.55}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .shell{max-width:1320px;margin:auto;padding:24px}
+    .hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:18px}
+    h1{font-size:clamp(24px,4vw,38px);line-height:1.12;margin:0 0 8px;letter-spacing:.03em}
+    .subtitle{color:var(--muted);margin:0}
+    .status{min-width:245px;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:#121722cc}
+    .status strong{display:block;color:var(--cyan)}
+    .status small{color:var(--muted)}
+    .toolbar,.tabs,.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .toolbar{margin:14px 0}
+    button,.button{border:1px solid var(--line);border-radius:10px;background:var(--panel2);color:var(--text);padding:9px 13px;text-decoration:none;transition:.15s}
+    button:hover,.button:hover{border-color:var(--blue);transform:translateY(-1px)}
+    button.primary,.button.primary{background:linear-gradient(135deg,#4e66d9,#397b91);border-color:#7aa2ff;box-shadow:0 0 0 1px #7aa2ff22,0 5px 16px #315bc744}
+    button.primary:hover,.button.primary:hover{background:linear-gradient(135deg,#6179eb,#4290aa);border-color:#9bb8ff}
+    button.danger{color:#ffd6db;border-color:#713743;background:#311b22}
+    button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+    .tabs{position:sticky;top:0;z-index:20;background:#0e1118e8;backdrop-filter:blur(12px);padding:10px 0;border-bottom:1px solid var(--line);margin-bottom:18px}
+    .tabs button{background:transparent;border-color:transparent;color:var(--muted)}
+    .tabs button.active{color:var(--text);background:var(--panel2);border-color:var(--line)}
+    .tab{display:none}.tab.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .grid>*{min-width:0}
+    .card{min-width:0;background:linear-gradient(160deg,#1b2130,#141923);border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:var(--shadow)}
+    .span-12{grid-column:span 12}.span-8{grid-column:span 8}.span-7{grid-column:span 7}.span-6{grid-column:span 6}.span-5{grid-column:span 5}.span-4{grid-column:span 4}
+    .card h2,.card h3{margin:0 0 12px}.card h2{font-size:19px}.card h3{font-size:16px;color:var(--gold)}
+    label{display:block;color:var(--muted);font-size:13px;margin:0 0 5px}
+    input,select,textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:#0e131d;color:var(--text);padding:9px 10px;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px #7aa2ff22}
+    input[type=number]{width:105px}
+    textarea{min-height:100px;resize:vertical}
+    .field{flex:1;min-width:180px}.qtyfield{flex:0 0 110px}
+    .search-results{display:grid;gap:6px;margin-top:10px;max-height:260px;overflow:auto}
+    .search-results button{text-align:left;background:#111824}
+    .search-results small{display:block;color:var(--muted)}
+    .empty{padding:34px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+    .notice{padding:12px 14px;border-left:3px solid var(--gold);background:#e8c16a12;color:#e9ddc2;border-radius:8px;margin:10px 0}
+    .notice.error{border-color:var(--red);background:#ff7b8b12;color:#ffd6db}
+    .notice.ok{border-color:var(--green);background:#79d39b12;color:#d8ffe6}
+    table{width:100%;border-collapse:separate;border-spacing:0;font-size:14px}
+    th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{color:var(--muted);font-weight:600;position:static;background:#171c27;box-shadow:0 1px 0 var(--line)}
+    #craftTable th,#gatherTable th{position:sticky;top:0;z-index:4}
+    th:first-child{border-top-left-radius:10px}th:last-child{border-top-right-radius:10px}
+    td.num,th.num{text-align:right;white-space:nowrap}
+    .table-wrap{width:100%;max-width:100%;overflow:auto;max-height:68vh;border:1px solid var(--line);border-radius:11px;scrollbar-gutter:stable}
+    .table-wrap table{min-width:680px}
+    .table-wrap tr:last-child td{border-bottom:0}
+    #targetList .table-wrap{max-height:none;overflow-x:auto;overflow-y:visible;scrollbar-gutter:auto}
+    #targetList .table-wrap table{min-width:500px}
+    #craftTable .table-wrap table{min-width:1180px;table-layout:fixed}
+    #craftTable th:nth-child(1){width:50px}
+    #craftTable th:nth-child(2){width:58px}
+    #craftTable th:nth-child(3){width:220px}
+    #craftTable th:nth-child(4){width:190px}
+    #craftTable th:nth-child(5){width:76px}
+    #craftTable th:nth-child(6){width:92px}
+    #craftTable th:nth-child(7){width:118px}
+    #craftTable td:nth-child(3),#craftTable td:nth-child(8){overflow-wrap:anywhere}
+    #craftTable select{width:100%;min-width:0}
+    .pill{display:inline-block;padding:2px 7px;border:1px solid var(--line);border-radius:999px;color:var(--muted);font-size:12px;white-space:nowrap}
+    .pill.target{color:#ffe6a8;border-color:#8b6c2c}.pill.timed{color:#ffe59a;border-color:#a2762b;background:#7a561f33}.pill.monster{color:#ffc49f;border-color:#8a5134}.pill.warn{color:#ffc6ce;border-color:#7b3842}
+    #gatherTable tr.timed-row td{background:#e8c16a0d}#gatherTable tr.timed-row td:first-child{box-shadow:inset 4px 0 #e8c16a}
+    #gatherTable tr.acquired{opacity:.48}#gatherTable tr.acquired .item-title{text-decoration:line-through}#craftTable tr.craft-complete{opacity:.48}#craftTable tr.craft-complete .item-title{text-decoration:line-through}.material-check{width:19px!important;height:19px;accent-color:var(--green);cursor:pointer;vertical-align:middle}.material-check-cell{width:44px;text-align:center!important}.check-progress{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:9px 11px;margin-bottom:8px;border:1px solid var(--line);border-radius:10px;background:#101620}.check-progress strong{color:var(--green)}.check-progress button{padding:4px 8px;font-size:12px}
+    .timer-list{display:grid;gap:5px;margin-top:7px}.timer-line{display:flex;align-items:center;gap:7px;flex-wrap:wrap;color:#cfb36f;font-size:12px}.timer-line.active{color:#80e0a0}.timer-line strong{min-width:108px;font-variant-numeric:tabular-nums}.timer-track{width:72px;height:5px;border-radius:99px;overflow:hidden;background:#080b11}.timer-track i{display:block;width:0;height:100%;background:#9b7a38;transition:width 1s linear}.timer-line.active .timer-track i{background:#56c986}.timer-unknown{margin-top:6px;color:#d8bc74;font-size:12px}
+    .item-title{font-weight:700;overflow-wrap:anywhere}.muted{color:var(--muted)}.gold{color:var(--gold)}.cyan{color:var(--cyan)}
+    .section-titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}.section-titlebar h2{margin:0}.section-titlebar .button{white-space:nowrap}.section-title-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+    .mini-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}.mini-actions button,.mini-actions .button{padding:4px 8px;font-size:12px;white-space:nowrap}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(100px,1fr));gap:8px}
+    .metric{padding:12px;border:1px solid var(--line);border-radius:12px;background:#101620}
+    .metric strong{display:block;font-size:22px}.metric span{color:var(--muted);font-size:12px}
+    .map-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:16px}
+    .map-grid>.notice{grid-column:1/-1;margin:0}
+    .route-settings{margin-bottom:16px}.route-controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap}.route-controls .field{flex:0 1 240px}
+    .map-card{border:1px solid var(--line);border-radius:15px;overflow:hidden;background:#121722}
+    .map-head{padding:12px 14px;background:#1d2432}.map-head h3{margin:0;color:var(--text)}
+    .map-wrap{position:relative;aspect-ratio:1;background:#090d14;overflow:hidden}
+    .map-wrap>img{width:100%;height:100%;object-fit:contain;display:block}
+    .marker{position:absolute;transform:translate(-50%,-50%);width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#111c;border:2px solid var(--cyan);color:white;font-size:12px;font-weight:800;box-shadow:0 2px 10px #000;z-index:4}
+    .marker.monster{border-color:#ff9d68;background:#542615dd}.marker.timed-material{border-color:#ffd565;background:#675018dd;box-shadow:0 0 0 4px #ffd56533,0 2px 10px #000}.marker.acquired{opacity:.3;filter:grayscale(1);box-shadow:none}
+    .marker.start{border-color:#80a8ff;background:#304d9dcc;font-size:15px}
+    .route{padding:12px 14px}.route ol{margin:7px 0 0;padding-left:22px}.route li{margin:6px 0}.route li.timed-material{margin-left:-5px;padding:7px;border-left:3px solid var(--gold);border-radius:6px;background:#e8c16a0d}.route li.acquired{opacity:.45}.route li.acquired .cyan{text-decoration:line-through}
+    .job-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:10px}
+    .job{border:1px solid var(--line);border-radius:12px;padding:12px;background:#111722}
+    .job h3{margin:0 0 8px}.job .row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.job input{min-width:0;width:100%}
+    .footer{color:var(--muted);font-size:12px;text-align:center;margin:24px 0 8px}
+    .hidden{display:none!important}
+    @media(max-width:850px){.hero{align-items:stretch;flex-direction:column}.status{min-width:0}.span-8,.span-7,.span-6,.span-5,.span-4{grid-column:span 12}.stats{grid-template-columns:repeat(2,1fr)}.shell{padding:15px}.card{padding:14px}.table-wrap{max-height:72vh}}
+    @media print{body{background:white;color:#111}.shell{max-width:none}.hero .status,.toolbar,.tabs,.mini-actions,.settings-only{display:none!important}.tab{display:block!important}.card,.map-card{box-shadow:none;border-color:#aaa;break-inside:avoid;background:white}.muted,label,.subtitle{color:#555}.map-wrap{max-width:420px}th{position:static;background:white}.table-wrap{max-height:none;overflow:visible}}
+  </style>
+</head>
+<body>
+<script id="project-seed" type="application/json">{"schema":1,"seedRevision":1,"title":"籌備任務","targets":[],"recipeChoices":{},"jobs":{},"notes":"","macros":{}}</script>
+<div class="shell">
+  <header class="hero">
+    <div>
+      <h1>FF14 籌備任務工作台</h1>
+      <p class="subtitle">配方展開、加工數量、基礎材料、採集／怪物來源與地圖路線集中整理。</p>
+    </div>
+    <div class="status"><strong id="dataStatus">尚未載入物品資料</strong><small id="dataMeta">第一次使用請按「更新物品資料」</small></div>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="updateDataBtn">更新物品資料</button>
+    <button id="recalcBtn">重新計算</button>
+    <button id="saveHtmlBtn">下載目前HTML快照</button>
+    <button id="exportProjectBtn">匯出專案</button>
+    <button id="importProjectBtn">匯入專案</button>
+    <button id="exportDataBtn">匯出資料快照</button>
+    <button id="importDataBtn">匯入資料快照</button>
+    <button onclick="window.print()">列印</button>
+    <input class="hidden" type="file" id="projectFile" accept="application/json,.json">
+    <input class="hidden" type="file" id="dataFile" accept="application/json,.json">
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="active" data-tab="overview">籌備清單</button>
+    <button data-tab="crafts">加工流程</button>
+    <button data-tab="gather">材料取得清單</button>
+    <button data-tab="maps">地圖路線</button>
+    <button data-tab="settings">設定</button>
+  </nav>
+
+  <main>
+    <section class="tab active" id="tab-overview">
+      <div class="grid">
+        <article class="card span-5">
+          <h2>加入籌備物品</h2>
+          <div class="row">
+            <div class="field"><label for="itemSearch">繁中物品名稱</label><input id="itemSearch" autocomplete="off" placeholder="例如：白雲母砂輪"></div>
+            <div class="qtyfield"><label for="itemQty">需要數量</label><input id="itemQty" type="number" min="1" value="1"></div>
+            <div style="align-self:end"><button class="primary" id="addTargetBtn">加入</button></div>
+          </div>
+          <div id="searchResults" class="search-results"></div>
+          <div class="notice">截圖更新版會把物品寫進這份檔案的初始專案；妳也可以直接在這裡增刪數量。</div>
+        </article>
+        <article class="card span-7">
+          <h2>目前籌備目標</h2>
+          <div id="targetList"></div>
+        </article>
+        <article class="card span-12">
+          <div class="stats" id="summaryStats"></div>
+        </article>
+        <article class="card span-12">
+          <h2>備註</h2>
+          <textarea id="projectNotes" placeholder="可記錄交貨批次、已持有材料、食物需求或其他注意事項。"></textarea>
+        </article>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-crafts">
+      <div class="card">
+        <div class="section-titlebar">
+          <h2>加工品與完成品</h2>
+          <div class="section-title-actions">
+            <a class="button primary" target="_blank" rel="noopener" href="https://isla-liu.github.io/ffxiv-best-craft-zhtw/#/recipe">開啟BestCraft求解</a>
+            <button class="danger" id="completeAndClearBtn">完成本次籌備並清空</button>
+          </div>
+        </div>
+        <div class="notice">數量已依每次製作產量向上取整。同一加工品若被多個完成品共用，會先合併需求再計算製作次數。</div>
+        <div class="notice">每個品項會同時列出繁中與官方簡中名稱；可複製簡中名稱到上方的BestCraft求解。配裝數值由BestCraft自己的瀏覽器資料保存。</div>
+        <div id="craftTable"></div>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-gather">
+      <div class="grid">
+        <article class="card span-8"><h2>基礎材料取得清單</h2><div id="gatherTable"></div></article>
+        <article class="card span-4"><h2>其他／待確認材料</h2><div id="otherTable"></div></article>
+      </div>
+    </section>
+
+    <section class="tab" id="tab-maps">
+      <div class="notice">進入倒數門檻的限時素材會自動排到前面；其餘地圖依利姆薩出發的自訂地域動線排序。同一順位或未列入動線的地圖，優先選擇可取得較多未完成材料的區域。路線仍不包含道路、高低差與區域門限制。</div>
+      <div class="card route-settings">
+        <div class="route-controls">
+          <div class="field"><label for="soonMinutes">限時素材提前優先（現實分鐘）</label><input id="soonMinutes" type="number" min="1" max="60" step="1"></div>
+        </div>
+      </div>
+      <div id="mapCards" class="map-grid"></div>
+    </section>
+
+    <section class="tab" id="tab-settings">
+      <div class="grid">
+        <article class="card span-6">
+          <h2>資料與來源</h2>
+          <p>配方、物品、採集點、怪物掉落與地圖資料由「FFXIV繁中物品搜尋站」的公開資料檔更新。本頁只在妳按下更新時連線，之後使用本機快取。</p>
+          <div class="mini-actions"><a class="button" target="_blank" rel="noopener" href="https://cycleapple.github.io/ffxiv-item-search-tc/">開啟物品搜尋站</a><a class="button" target="_blank" rel="noopener" href="https://isla-liu.github.io/ffxiv-best-craft-zhtw/#/recipe">開啟BestCraft</a></div>
+        </article>
+        <article class="card span-6">
+          <h2>BestCraft配裝與專案</h2>
+          <p class="muted">製作職業數值不在本工具重複保存；請直接在BestCraft設定，之後它會沿用同一瀏覽器中的資料。「清空專案」只刪除本工具的目標與備註，不會刪除物品資料或BestCraft配裝。</p>
+          <button class="danger" id="clearProjectBtn">清空專案</button>
+        </article>
+      </div>
+    </section>
+  </main>
+  <p class="footer">單檔本地工具 · 專案存於瀏覽器本機 · 地圖圖片需連線顯示</p>
+</div>
+
+<script>
+(() => {
+  'use strict';
+  const DATA_BASE = 'https://cycleapple.github.io/ffxiv-item-search-tc/data/';
+  const DATA_URLS = {
+    itemsIndex: DATA_BASE + 'items-index.json',
+    recipes: DATA_BASE + 'recipes.json',
+    gathering: DATA_BASE + 'gathering.json',
+    zoneMaps: DATA_BASE + 'zone-maps.json',
+    sources: DATA_BASE + 'sources.json',
+    mobPositions: DATA_BASE + 'mob-positions.json'
+  };
+  const PROJECT_KEY = 'ff14-prep-workbench-project-v1';
+  const DB_NAME = 'ff14-prep-workbench-db';
+  const DB_STORE = 'snapshots';
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const esc = value => String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+  const clone = x => JSON.parse(JSON.stringify(x));
+  let db = null, data = null, project = loadProject(), itemRows = [], itemById = new Map(), field = {}, plan = null, searchSelection = null, timerInterval = null, lastRoutePrioritySignature = null;
+
+  function seedProject() {
+    try { return JSON.parse($('#project-seed').textContent); }
+    catch { return {schema:1,seedRevision:1,title:'籌備任務',targets:[],recipeChoices:{},jobs:{},notes:'',macros:{}}; }
+  }
+  function normalizeProject(p) {
+    const s = seedProject();
+    return {
+      schema:1, seedRevision:Number(p?.seedRevision || s.seedRevision || 1), title:p?.title || '籌備任務',
+      targets:Array.isArray(p?.targets) ? p.targets.filter(x=>x && Number(x.itemId)>0 && Number(x.qty)>0).map(x=>({itemId:Number(x.itemId),qty:Math.ceil(Number(x.qty))})) : [],
+      recipeChoices:p?.recipeChoices && typeof p.recipeChoices==='object' ? p.recipeChoices : {},
+      jobs:p?.jobs && typeof p.jobs==='object' ? p.jobs : {}, notes:String(p?.notes || ''), macros:p?.macros && typeof p.macros==='object' ? p.macros : {},
+      acquired:p?.acquired && typeof p.acquired==='object' ? Object.fromEntries(Object.entries(p.acquired).filter(([id,qty])=>Number(id)>0&&Number(qty)>0).map(([id,qty])=>[String(Number(id)),Number(qty)])) : {},
+      crafted:p?.crafted && typeof p.crafted==='object' ? Object.fromEntries(Object.entries(p.crafted).filter(([id,qty])=>Number(id)>0&&Number(qty)>0).map(([id,qty])=>[String(Number(id)),Number(qty)])) : {},
+      routeSettings:{
+        soonMinutes:Math.max(1,Math.min(60,Number(p?.routeSettings?.soonMinutes)||5))
+      }
+    };
+  }
+  function loadProject() {
+    const seed = seedProject();
+    try {
+      const local = JSON.parse(localStorage.getItem(PROJECT_KEY));
+      if (!local) return normalizeProject(seed);
+      if (Number(seed.seedRevision||0) > Number(local.seedRevision||0)) {
+        const merged = normalizeProject(seed);
+        merged.jobs = local.jobs || merged.jobs; merged.macros = local.macros || {}; merged.routeSettings=normalizeProject(local).routeSettings; merged.notes = seed.notes || local.notes || '';
+        return merged;
+      }
+      return normalizeProject(local);
+    } catch { return normalizeProject(seed); }
+  }
+  function saveProject(recalc=true) {
+    localStorage.setItem(PROJECT_KEY, JSON.stringify(project));
+    if (recalc && data) calculate();
+  }
+
+  function openDb() {
+    return new Promise((resolve,reject) => {
+      const req = indexedDB.open(DB_NAME,1);
+      req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+      req.onsuccess = () => { db=req.result; resolve(db); };
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function dbGet(key) { return new Promise((resolve,reject)=>{ const r=db.transaction(DB_STORE).objectStore(DB_STORE).get(key); r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); }); }
+  function dbPut(key,value) { return new Promise((resolve,reject)=>{ const r=db.transaction(DB_STORE,'readwrite').objectStore(DB_STORE).put(value,key); r.onsuccess=()=>resolve(); r.onerror=()=>reject(r.error); }); }
+
+  async function boot() {
+    bindUi(); $('#projectNotes').value=project.notes;
+    try { await openDb(); const cached=await dbGet('current'); if(cached?.payload){ data=cached.payload; data._meta=cached.meta; prepareData(); setDataStatus('ready'); calculate(); } }
+    catch(e) { console.warn(e); setDataStatus('error','本機資料庫無法使用；仍可在本次開啟期間操作。'); }
+    renderTargets(); renderSummary();
+  }
+  function setDataStatus(state,msg='') {
+    const status=$('#dataStatus'), meta=$('#dataMeta');
+    if(state==='loading'){status.textContent='正在更新資料…';meta.textContent=msg||'資料約 27 MB，請稍候';}
+    else if(state==='ready'){status.textContent='物品資料已就緒';const d=data?._meta?.updatedAt,legacy=!data?.sources||!data?.mobPositions;meta.textContent=(d?'本機快照：'+new Date(d).toLocaleString():'已載入匯入資料')+(legacy?' · 請按更新補充怪物掉落資料':'');}
+    else if(state==='error'){status.textContent='資料載入失敗';meta.textContent=msg||'請確認網路後重試';}
+    else {status.textContent='尚未載入物品資料';meta.textContent=msg||'第一次使用請按「更新物品資料」';}
+  }
+  async function updateData() {
+    setDataStatus('loading'); $('#updateDataBtn').disabled=true;
+    try {
+      const entries=await Promise.all(Object.entries(DATA_URLS).map(async ([k,url])=>{const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw new Error(`${k}: HTTP ${r.status}`);return [k,await r.json()];}));
+      data=Object.fromEntries(entries); data._meta={updatedAt:new Date().toISOString(),source:DATA_BASE};
+      if(db) await dbPut('current',{meta:data._meta,payload:data}); prepareData(); setDataStatus('ready'); calculate();
+    } catch(e) { console.error(e); setDataStatus('error',String(e.message||e)); alert('更新失敗：'+(e.message||e)+'\n若瀏覽器禁止本地檔跨網域讀取，可改用「匯入資料快照」。'); }
+    finally { $('#updateDataBtn').disabled=false; }
+  }
+  function prepareData() {
+    const idx=data?.itemsIndex; if(!idx?.fields||!idx?.items) throw new Error('物品索引格式不正確');
+    field=Object.fromEntries(idx.fields.map((n,i)=>[n,i])); itemRows=idx.items; itemById=new Map(itemRows.map(r=>[Number(r[field.id]),r]));
+  }
+  function item(id) {
+    const r=itemById.get(Number(id)); if(!r)return {id:Number(id),name:`未知物品 #${id}`,cn:'',isCraftable:0,isGatherable:0,categoryName:''};
+    return {id:Number(r[field.id]),name:r[field.name],cn:String(r[field.cn]||''),icon:r[field.icon],itemLevel:r[field.itemLevel],categoryName:r[field.categoryName],isCraftable:Number(r[field.isCraftable]),isGatherable:Number(r[field.isGatherable]),patch:r[field.patch]};
+  }
+  function recipesFor(id) { return data?.recipes?.recipes?.[String(id)] || []; }
+  function chosenRecipe(id) {
+    const list=recipesFor(id); if(!list.length)return null;
+    const selected=Number(project.recipeChoices[String(id)]||0);
+    return list.find(r=>Number(r.id)===selected) || list[0];
+  }
+  function gatherPoints(id) { return data?.gathering?.points?.[String(id)] || []; }
+  function dropSources(id) { return (data?.sources?.sources?.[String(id)] || []).filter(x=>x?.type==='drop'); }
+  function monsterPoints(id) {
+    const points=[];
+    for(const source of dropSources(id)) (source.mobIds||[]).forEach((mobId,i)=>{
+      const mobName=source.mobNames?.[i]||`怪物 #${mobId}`;
+      for(const zone of data?.mobPositions?.[String(mobId)]?.positions||[]) for(const p of zone.positions||[]) points.push({
+        mapId:Number(zone.mapId),x:Number(p.x),y:Number(p.y),level:Number(p.level)||0,sourceType:'monster',mobId:Number(mobId),mobName,
+        zoneName:zone.zoneName||'',mapPath:zone.mapPath||'',sizeFactor:Number(zone.sizeFactor)||100
+      });
+    });
+    return points;
+  }
+
+  function calculate() {
+    if(!data){renderTargets();renderSummary();return;}
+    try { plan=buildPlan(); renderAll(); }
+    catch(e){ console.error(e); plan=null; $('#craftTable').innerHTML=`<div class="notice error">計算失敗：${esc(e.message||e)}</div>`; }
+  }
+  function buildPlan() {
+    const demands=new Map(), nodes=new Set(), edges=new Map(), indegree=new Map(), visiting=new Set(), warnings=[];
+    for(const t of project.targets) demands.set(t.itemId,(demands.get(t.itemId)||0)+t.qty);
+    function visit(id) {
+      id=Number(id); if(nodes.has(id))return; if(visiting.has(id)){warnings.push(`偵測到循環配方：${item(id).name}`);return;}
+      const r=chosenRecipe(id); if(!r)return;
+      visiting.add(id); nodes.add(id); edges.set(id,new Set()); if(!indegree.has(id))indegree.set(id,0);
+      for(const ing of r.ingredients||[]) {
+        const child=Number(ing.itemId); if(chosenRecipe(child)){
+          if(!edges.get(id).has(child)){ edges.get(id).add(child); indegree.set(child,(indegree.get(child)||0)+1); }
+          visit(child);
+        }
+      }
+      visiting.delete(id);
+    }
+    for(const t of project.targets) visit(t.itemId);
+    const queue=[...nodes].filter(id=>(indegree.get(id)||0)===0), craftPlan=[], raw=new Map(), expanded=new Set();
+    while(queue.length){
+      const id=queue.shift(); expanded.add(id); const need=demands.get(id)||0, r=chosenRecipe(id); if(!r)continue;
+      const yieldQty=Math.max(1,Number(r.resultAmount)||1), crafts=Math.ceil(need/yieldQty), produced=crafts*yieldQty;
+      craftPlan.push({itemId:id,need,crafts,produced,yieldQty,recipe:r,isTarget:project.targets.some(t=>t.itemId===id)});
+      for(const ing of r.ingredients||[]){
+        const child=Number(ing.itemId), qty=Number(ing.amount||0)*crafts; demands.set(child,(demands.get(child)||0)+qty);
+      }
+      for(const child of edges.get(id)||[]){ indegree.set(child,(indegree.get(child)||0)-1); if(indegree.get(child)===0)queue.push(child); }
+    }
+    for(const id of nodes) if(!expanded.has(id))warnings.push(`未能展開：${item(id).name}`);
+    for(const [id,qty] of demands) if(!nodes.has(id) && qty>0) raw.set(id,qty);
+    const gathering=[],monsters=[],other=[];
+    for(const [id,qty] of raw){
+      const it=item(id),points=gatherPoints(id),drops=dropSources(id);
+      if(points.length)gathering.push({itemId:id,qty,points,sourceType:'gather'});
+      else if(drops.length)monsters.push({itemId:id,qty,points:monsterPoints(id),drops,sourceType:'monster'});
+      else if(it.isGatherable)gathering.push({itemId:id,qty,points,sourceType:'gather'});
+      else other.push({itemId:id,qty,points:[]});
+    }
+    const procurement=[...gathering,...monsters].sort((a,b)=>item(a.itemId).name.localeCompare(item(b.itemId).name,'zh-Hant'));
+    other.sort((a,b)=>item(a.itemId).name.localeCompare(item(b.itemId).name,'zh-Hant'));
+    const routes=buildRoutes(procurement);
+    return {craftPlan,raw,gathering,monsters,procurement,other,routes,warnings};
+  }
+
+  function mapIndex() {
+    const byId={}; for(const [name,m] of Object.entries(data?.zoneMaps?.maps||{})) if(m.id)byId[m.id]={...m,name}; return byId;
+  }
+  const dist=(a,b)=>Math.hypot(Number(a.x)-Number(b.x),Number(a.y)-Number(b.y));
+  const ROUTE_ZONE_ORDER=[
+    '中拉諾西亞','拉諾西亞低地','拉諾西亞高地','拉諾西亞外地','西拉諾西亞','東拉諾西亞',
+    '西薩納蘭','中薩納蘭','東薩納蘭','南薩納蘭','北薩納蘭','摩杜納',
+    '黑衣森林南部林區','黑衣森林東部林區','黑衣森林中央林區','黑衣森林北部林區',
+    '庫爾札斯中央高地','庫爾札斯西部高地',
+    '德拉瓦尼亞山麓地','德拉瓦尼亞河谷地','德拉瓦尼亞雲海',
+    '阿巴拉提亞雲海','魔大陸阿濟茲拉',
+    '基拉巴尼亞邊區','基拉巴尼亞山區','基拉巴尼亞湖區',
+    '迷津','薩維奈島','加雷馬','嘆息海','天外天垓',
+    '紅玉海','延夏','太陽神草原'
+  ];
+  const ROUTE_ZONE_RANK=new Map(ROUTE_ZONE_ORDER.map((name,i)=>[name,i]));
+  const ROUTE_AETHERYTE_ORDER={
+    '紅玉海':[['碧玉水','自凝島']],
+    '延夏':[['茨菰村'],['烈士庵']],
+    '太陽神草原':[['重逢市集'],['晨曦王座'],['朵洛衣樓']]
+  };
+  function mapRouteRank(mapId,byMap=mapIndex()){const name=byMap[Number(mapId)]?.name||'';return ROUTE_ZONE_RANK.has(name)?ROUTE_ZONE_RANK.get(name):Number.MAX_SAFE_INTEGER;}
+  function aetheryteRouteRank(mapName,aetheryteName){const groups=ROUTE_AETHERYTE_ORDER[mapName];if(!groups)return 0;const rank=groups.findIndex(names=>names.includes(aetheryteName));return rank<0?groups.length:rank;}
+  function nearestAetheryte(point,map){const anchors=(map?.aetherytes||[]).filter(a=>a.type===0);if(!anchors.length)return {anchor:null,rank:0,distance:Infinity};const anchor=anchors.slice().sort((a,b)=>dist(point,a)-dist(point,b))[0];return {anchor,rank:aetheryteRouteRank(map.name,anchor.name),distance:dist(point,anchor)};}
+  function routeConfig(){return project.routeSettings||{soonMinutes:5};}
+  function materialUrgency(g,now=Date.now()){
+    if(isAcquired(g))return {urgent:false,active:false,rank:Infinity,seconds:Infinity};
+    if(!(g.points||[]).length||(g.points||[]).some(p=>!isTimedPoint(p)))return {urgent:false,active:false,rank:Infinity,seconds:Infinity};
+    const threshold=routeConfig().soonMinutes*60;let best=null;
+    for(const p of g.points||[]){if(!isTimedPoint(p)||!p.spawns?.length||!(Number(p.duration)>0))continue;const state=scheduleState(p.spawns.map(Number),Number(p.duration),now);if(!state)continue;const rank=state.active?-1000000+state.seconds:state.seconds,candidate={urgent:state.active||state.seconds<=threshold,active:state.active,rank,seconds:state.seconds};if(!best||candidate.rank<best.rank)best=candidate;}
+    return best||{urgent:false,active:false,rank:Infinity,seconds:Infinity};
+  }
+  function buildRoutes(gathering) {
+    const byMap=mapIndex(), remaining=new Map(), noPoint=[],now=Date.now();
+    for(const g of gathering){ const valid=g.points.filter(p=>p.mapId&&Number.isFinite(Number(p.x))&&Number.isFinite(Number(p.y))),always=valid.filter(p=>!isTimedPoint(p)),preferred=always.length?always:valid; if(preferred.length)remaining.set(g.itemId,{...g,points:preferred});else noPoint.push(g); }
+    const chosen=[];
+    while(remaining.size){
+      const pendingExists=[...remaining.values()].some(g=>!isAcquired(g)),coverage=new Map();
+      for(const g of remaining.values()) {
+        if(pendingExists&&isAcquired(g))continue;
+        const urgency=materialUrgency(g,now);
+        for(const mapId of new Set(g.points.map(p=>Number(p.mapId)))) {
+        const candidates=g.points.filter(p=>Number(p.mapId)===mapId), minLevel=Math.min(...candidates.map(p=>Number(p.level)||999));
+          const v=coverage.get(mapId)||{count:0,levelScore:0,urgentRank:Infinity,urgentCount:0};v.count++;v.levelScore+=minLevel;if(urgency.urgent){v.urgentCount++;v.urgentRank=Math.min(v.urgentRank,urgency.rank);}coverage.set(mapId,v);
+        }
+      }
+      const anyUrgent=[...coverage.values()].some(v=>v.urgentCount>0);
+      let routeCandidates=[...coverage];
+      if(anyUrgent)routeCandidates=routeCandidates.filter(x=>x[1].urgentCount>0);
+      else {
+        const knownRanks=routeCandidates.map(x=>mapRouteRank(x[0],byMap)).filter(Number.isSafeInteger),nextRank=Math.min(...knownRanks);
+        if(Number.isFinite(nextRank)){
+          const thanalanStart=ROUTE_ZONE_RANK.get('西薩納蘭'),thanalanEnd=ROUTE_ZONE_RANK.get('北薩納蘭');
+          routeCandidates=routeCandidates.filter(x=>{const name=byMap[x[0]]?.name||'',rank=mapRouteRank(x[0],byMap);return rank===nextRank||(name==='摩杜納'&&nextRank>=thanalanStart&&nextRank<=thanalanEnd);});
+        }
+      }
+      const best=routeCandidates.sort((a,b)=>{
+        if(anyUrgent){if(a[1].urgentRank!==b[1].urgentRank)return a[1].urgentRank-b[1].urgentRank;const ap=mapRouteRank(a[0],byMap),bp=mapRouteRank(b[0],byMap);if(ap!==bp)return ap-bp;}
+        return b[1].count-a[1].count||a[1].levelScore-b[1].levelScore||String(byMap[a[0]]?.name||'').localeCompare(String(byMap[b[0]]?.name||''),'zh-Hant');
+      })[0];
+      if(!best)break; const mapId=best[0],sample=[...remaining.values()].flatMap(g=>g.points).find(p=>Number(p.mapId)===Number(mapId));
+      const map=byMap[mapId]||{id:mapId,name:sample?.zoneName||`地圖 #${mapId}`,path:sample?.mapPath||'',aetherytes:[],sizeFactor:sample?.sizeFactor||100};
+      const assigned=[];
+      for(const [id,g] of [...remaining]) if(g.points.some(p=>Number(p.mapId)===mapId)){
+        const points=g.points.filter(p=>Number(p.mapId)===mapId), anchors=(map.aetherytes||[]).filter(a=>a.type===0); const usable=anchors.length?anchors:(map.aetherytes||[]);
+        const point=points.slice().sort((a,b)=>{const aa=nearestAetheryte(a,map),ba=nearestAetheryte(b,map);return aa.rank-ba.rank||Math.min(...(usable.length?usable:[{x:21,y:21}]).map(x=>dist(a,x)))-Math.min(...(usable.length?usable:[{x:21,y:21}]).map(x=>dist(b,x)));})[0];
+        assigned.push({...g,point,urgency:materialUrgency(g,now)}); remaining.delete(id);
+      }
+      const crystals=(map.aetherytes||[]).filter(a=>a.type===0), starts=crystals.length?crystals:(map.aetherytes||[]);
+      const relevantRank=assigned.length?Math.min(...assigned.map(g=>nearestAetheryte(g.point,map).rank)):0;
+      const relevantStarts=starts.filter(a=>aetheryteRouteRank(map.name,a.name)===relevantRank),startPool=relevantStarts.length?relevantStarts:starts;
+      const start=startPool.length?startPool.slice().sort((a,b)=>assigned.reduce((n,g)=>n+dist(a,g.point),0)-assigned.reduce((n,g)=>n+dist(b,g.point),0))[0]:{name:'區域中央',x:21,y:21,type:-1};
+      const ordered=[], pool=assigned.slice(); let cursor=start;
+      while(pool.length){ pool.sort((a,b)=>Number(isAcquired(a))-Number(isAcquired(b))||Number(!a.urgency.urgent)-Number(!b.urgency.urgent)||a.urgency.rank-b.urgency.rank||nearestAetheryte(a.point,map).rank-nearestAetheryte(b.point,map).rank||dist(cursor,a.point)-dist(cursor,b.point)); const next=pool.shift();ordered.push(next);cursor=next.point; }
+      chosen.push({mapId,map,start,items:ordered,urgent:ordered.some(x=>x.urgency.urgent&&!isAcquired(x))});
+    }
+    return {groups:chosen,noPoint};
+  }
+
+  function routePrioritySignature(now=Date.now()){return (plan?.procurement||[]).filter(x=>!isAcquired(x)).map(x=>{const u=materialUrgency(x,now);return `${x.itemId}:${u.active?'A':u.urgent?'U':'N'}`;}).sort().join('|');}
+  function renderAll(){renderTargets();renderSummary();renderCrafts();renderGather();renderRouteSettings();renderMaps();bindMaterialChecks();lastRoutePrioritySignature=routePrioritySignature();refreshTimers();if(!timerInterval)timerInterval=setInterval(refreshTimers,1000);}
+  function renderTargets(){
+    const box=$('#targetList'); if(!project.targets.length){box.innerHTML='<div class="empty">尚未加入籌備物品</div>';return;}
+    box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>物品</th><th class="num">數量</th><th></th></tr></thead><tbody>${project.targets.map((t,i)=>`<tr><td><span class="item-title">${esc(data?item(t.itemId).name:'#'+t.itemId)}</span><br><span class="muted">ID ${t.itemId}</span></td><td class="num"><input type="number" min="1" value="${t.qty}" data-target-qty="${i}"></td><td class="num"><button class="danger" data-target-del="${i}">刪除</button></td></tr>`).join('')}</tbody></table></div>`;
+    $$('[data-target-qty]').forEach(el=>el.addEventListener('change',()=>{project.targets[Number(el.dataset.targetQty)].qty=Math.max(1,Math.ceil(Number(el.value)||1));saveProject();}));
+    $$('[data-target-del]').forEach(el=>el.addEventListener('click',()=>{project.targets.splice(Number(el.dataset.targetDel),1);saveProject();}));
+  }
+  function renderSummary(){
+    const p=plan, stats=[['目標品項',project.targets.length],['製作種類',p?.craftPlan?.length||0],['基礎材料',p?.raw?.size||0],['取得地圖',p?.routes?.groups?.length||0]];
+    $('#summaryStats').innerHTML=stats.map(([k,v])=>`<div class="metric"><strong>${v}</strong><span>${k}</span></div>`).join('');
+  }
+  function recipeSelect(row){
+    const list=recipesFor(row.itemId); if(list.length<2)return `<span class="pill">${esc(row.recipe.craftTypeName)}</span>`;
+    return `<select data-recipe-choice="${row.itemId}">${list.map(r=>`<option value="${r.id}" ${r.id===row.recipe.id?'selected':''}>${esc(r.craftTypeName)} Lv.${r.classJobLevel} · 配方${r.id}</option>`).join('')}</select>`;
+  }
+  function isCraftComplete(row){return Number(project.crafted?.[String(row.itemId)]||0)>=Number(row.need||0);}
+  function craftCheckbox(row){return `<input class="material-check" type="checkbox" data-craft-check="${row.itemId}" ${isCraftComplete(row)?'checked':''} aria-label="標記 ${esc(item(row.itemId).name)} 已製作完成" title="標記已完成目前需要的 ${row.need} 個">`;}
+  function refreshCraftCheckVisuals(){
+    const rows=plan?.craftPlan||[],done=rows.filter(isCraftComplete).length;
+    $('#craftProgress') && ($('#craftProgress').textContent=`${done}／${rows.length}`);
+    for(const row of rows){
+      const complete=isCraftComplete(row),id=String(row.itemId);
+      $$(`[data-craft-row="${id}"]`).forEach(el=>el.classList.toggle('craft-complete',complete));
+      $$(`[data-craft-check="${id}"]`).forEach(el=>el.checked=complete);
+    }
+  }
+  function renderCrafts(){
+    const box=$('#craftTable'); if(!plan?.craftPlan?.length){box.innerHTML='<div class="empty">加入可製作物品後會顯示加工流程</div>';return;}
+    const rows=plan.craftPlan.slice().reverse(),done=rows.filter(isCraftComplete).length;
+    box.innerHTML=`${plan.warnings.map(w=>`<div class="notice error">${esc(w)}</div>`).join('')}<div class="check-progress"><span>已完成 <strong id="craftProgress">${done}／${rows.length}</strong> 種製作品</span><button id="clearCraftedBtn">清除勾選</button></div><div class="table-wrap"><table><thead><tr><th class="material-check-cell">完成</th><th>順序</th><th>完成／加工品</th><th>職業與配方</th><th class="num">需要</th><th class="num">製作次數</th><th class="num">實際產出</th><th>本層材料</th></tr></thead><tbody>${rows.map((r,i)=>{const it=item(r.itemId),cn=it.cn||it.name;return `<tr data-craft-row="${r.itemId}" class="${isCraftComplete(r)?'craft-complete':''}"><td class="material-check-cell">${craftCheckbox(r)}</td><td>${i+1}</td><td><span class="item-title">${esc(it.name)}</span> ${r.isTarget?'<span class="pill target">完成品</span>':'<span class="pill">加工品</span>'}<div class="muted">簡中：<span lang="zh-Hans">${esc(cn)}</span></div></td><td>${recipeSelect(r)}<div class="muted">Lv.${r.recipe.classJobLevel} · 耐久 ${r.recipe.durability}</div></td><td class="num">${r.need}</td><td class="num">${r.crafts}</td><td class="num">${r.produced}${r.yieldQty>1?`（每次 ${r.yieldQty}）`:''}</td><td>${(r.recipe.ingredients||[]).map(x=>`${esc(item(x.itemId).name)} × ${Number(x.amount)*r.crafts}`).join('<br>')}</td></tr>`;}).join('')}</tbody></table></div>`;
+    $$('[data-recipe-choice]').forEach(el=>el.addEventListener('change',()=>{project.recipeChoices[el.dataset.recipeChoice]=Number(el.value);saveProject();}));
+    $$('[data-craft-check]').forEach(el=>el.addEventListener('change',()=>{const id=String(Number(el.dataset.craftCheck)),row=(plan?.craftPlan||[]).find(x=>String(x.itemId)===id);if(!row)return;if(el.checked)project.crafted[id]=Number(row.need);else delete project.crafted[id];saveProject(false);refreshCraftCheckVisuals();}));
+    $('#clearCraftedBtn')?.addEventListener('click',()=>{if(!confirm('確定要清除這份專案的所有製作完成勾選？'))return;project.crafted={};saveProject(false);refreshCraftCheckVisuals();});
+  }
+  function pointLabel(points){
+    if(!points?.length)return '<span class="pill warn">無座標資料</span>';
+    const maps=mapIndex(), names=[...new Set(points.map(p=>maps[p.mapId]?.name||p.zoneName||p.placeName||`地圖${p.mapId}`))]; return names.slice(0,3).map(n=>`<span class="pill">${esc(n)}</span>`).join(' ')+(names.length>3?` <span class="muted">等 ${names.length} 區</span>`:'');
+  }
+  function sourceLabel(x){
+    if(x.sourceType==='monster'){
+      const names=[...new Set((x.drops||[]).flatMap(d=>d.mobNames||[]))],total=Math.max(names.length,...(x.drops||[]).map(d=>Number(d.totalMobs)||0));
+      const shown=names.slice(0,5).map(esc).join('、')||'怪物名稱待確認',more=total>names.length?`等 ${total} 種怪物`:names.length>5?`等 ${names.length} 種怪物`:'';
+      const levels=[...new Set((x.points||[]).map(p=>Number(p.level)).filter(Boolean))].sort((a,b)=>a-b),lv=levels.length?(levels[0]===levels.at(-1)?`Lv.${levels[0]}`:`Lv.${levels[0]}–${levels.at(-1)}`):'';
+      return `<span class="pill monster">怪物掉落</span><div>${shown}${more?` <span class="muted">（${more}）</span>`:''}</div>${lv?`<div class="muted">${lv}</div>`:''}`;
+    }
+    const types=[...new Set((x.points||[]).map(p=>p.gatheringTypeName).filter(Boolean))],levels=[...new Set((x.points||[]).map(p=>Number(p.level)).filter(Boolean))].sort((a,b)=>a-b);
+    const lv=levels.length?(levels[0]===levels.at(-1)?`Lv.${levels[0]}`:`Lv.${levels[0]}–${levels.at(-1)}`):'';
+    const timed=isTimedMaterial(x);
+    return `<span class="pill">採集</span>${timed?' <span class="pill timed">⏰ 限時素材</span>':''}<div>${esc(types.join('／')||'採集點')}${lv?` · ${lv}`:''}</div>`;
+  }
+  function isAcquired(x){return Number(project.acquired?.[String(x.itemId)]||0)>=Number(x.qty||0);}
+  function materialCheckbox(x){return `<input class="material-check" type="checkbox" data-material-check="${x.itemId}" ${isAcquired(x)?'checked':''} aria-label="標記 ${esc(item(x.itemId).name)} 已取得" title="標記已取得目前所需的 ${x.qty} 個">`;}
+  function acquisitionProgress(){const rows=plan?.procurement||[],done=rows.filter(isAcquired).length;return {done,total:rows.length};}
+  function renderGather(){
+    const g=$('#gatherTable'),o=$('#otherTable');
+    const progress=acquisitionProgress();
+    g.innerHTML=plan?.procurement?.length?`<div class="check-progress"><span>已取得 <strong id="gatherProgress">${progress.done}／${progress.total}</strong> 種材料</span><button id="clearAcquiredBtn">清除勾選</button></div><div class="table-wrap"><table><thead><tr><th class="material-check-cell">完成</th><th>材料</th><th class="num">總數</th><th>取得方式</th><th>可選區域與時段</th></tr></thead><tbody>${plan.procurement.map(x=>`<tr data-material-row="${x.itemId}" class="${isTimedMaterial(x)?'timed-row ':''}${isAcquired(x)?'acquired':''}"><td class="material-check-cell">${materialCheckbox(x)}</td><td><span class="item-title">${esc(item(x.itemId).name)}</span><br><span class="muted">${esc(item(x.itemId).categoryName)}</span></td><td class="num">${x.qty}</td><td>${sourceLabel(x)}</td><td>${pointLabel(x.points)}${isTimedMaterial(x)?timerList(x.points,3):''}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty">沒有可採集或由怪物取得的材料</div>';
+    o.innerHTML=plan?.other?.length?`<table><thead><tr><th>材料</th><th class="num">總數</th></tr></thead><tbody>${plan.other.map(x=>`<tr><td>${esc(item(x.itemId).name)}<br><span class="muted">${esc(item(x.itemId).categoryName||'來源待確認')}</span></td><td class="num">${x.qty}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">沒有其他材料</div>';
+  }
+  function renderRouteSettings(){
+    const cfg=routeConfig();
+    $('#soonMinutes').value=cfg.soonMinutes;
+    $('#soonMinutes').onchange=()=>{project.routeSettings.soonMinutes=Math.max(1,Math.min(60,Number($('#soonMinutes').value)||5));saveProject();};
+  }
+  function markerPos(v,sizeFactor){return (Number(v)-1)*Number(sizeFactor||100)/40.96;}
+  function isTimedPoint(p){return !!(p?.timeRestriction||p?.spawns?.length);}
+  function isTimedMaterial(x){return !!((x?.points||[]).length&&(x.points||[]).every(isTimedPoint));}
+  function etClock(hour){const minutes=Math.round((Number(hour)||0)*60),h=((Math.floor(minutes/60)%24)+24)%24,m=((minutes%60)+60)%60;return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
+  function timerList(points,max=3){
+    const timed=(points||[]).filter(isTimedPoint),seen=new Set(),schedules=[];
+    for(const p of timed){const spawns=(p.spawns||[]).map(Number).filter(Number.isFinite),duration=Number(p.duration)||0,key=`${spawns.join(',')}|${duration}`;if(seen.has(key))continue;seen.add(key);schedules.push({spawns,duration});}
+    if(!timed.length)return '';
+    const ready=schedules.filter(s=>s.spawns.length&&s.duration>0).slice(0,max),more=schedules.filter(s=>s.spawns.length&&s.duration>0).length-ready.length;
+    if(!ready.length)return '<div class="timer-unknown">⏰ 限時素材（來源資料沒有倒數時段）</div>';
+    return `<div class="timer-list">${ready.map(s=>`<div class="timer-line" data-et-timer data-spawns="${esc(s.spawns.join(','))}" data-duration="${s.duration}"><span>ET ${s.spawns.map(etClock).join('、')}</span><span class="timer-track"><i></i></span><strong>計算中…</strong></div>`).join('')}${more>0?`<div class="muted">另有 ${more} 組時段</div>`:''}</div>`;
+  }
+  function scheduleState(spawns,duration,now=Date.now()){
+    if(!spawns.length||!(duration>0))return null;
+    const etSeconds=Math.floor(now*(3600/175)/1000),current=(etSeconds%86400)/60,day=1440,states=spawns.map(startHour=>{
+      const start=Number(startHour)*60,end=start+duration,active=end<=day?(current>=start&&current<end):(current>=start||current<end%day);
+      if(active){const elapsed=current>=start?current-start:current+day-start,remain=Math.max(0,(duration-elapsed)*175/60);return {active:true,seconds:Math.floor(remain),progress:Math.min(1,elapsed/duration)};}
+      let wait=start-current;if(wait<=0)wait+=day;return {active:false,seconds:Math.floor(wait*175/60),progress:Math.max(0,Math.min(1,1-wait/(day-duration)))};
+    });
+    return states.find(s=>s.active)||states.sort((a,b)=>a.seconds-b.seconds)[0];
+  }
+  function durationText(seconds){seconds=Math.max(0,Math.floor(seconds));const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=seconds%60;return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;}
+  function refreshTimers(){
+    $$('[data-et-timer]').forEach(el=>{const state=scheduleState(String(el.dataset.spawns||'').split(',').filter(Boolean).map(Number),Number(el.dataset.duration));if(!state)return;el.classList.toggle('active',state.active);const label=el.querySelector('strong'),bar=el.querySelector('.timer-track i');if(label)label.textContent=state.active?`採集中｜剩餘 ${durationText(state.seconds)}`:`距離出現 ${durationText(state.seconds)}`;if(bar)bar.style.width=`${Math.round(state.progress*100)}%`;});
+    const signature=routePrioritySignature();if(lastRoutePrioritySignature!==null&&signature!==lastRoutePrioritySignature){lastRoutePrioritySignature=signature;calculate();}
+  }
+  function timeText(p){return isTimedPoint(p)?timerList([p],1):'';}
+  function renderMaps(){
+    const box=$('#mapCards'),groups=plan?.routes?.groups||[],noPoint=plan?.routes?.noPoint||[]; if(!groups.length&&!noPoint.length){box.innerHTML='<div class="empty">目前沒有可繪製的材料取得地圖</div>';return;}
+    const missing=noPoint.length?`<div class="notice">以下材料有來源，但目前沒有可繪製的座標：${noPoint.map(x=>esc(item(x.itemId).name)).join('、')}</div>`:'';
+    box.innerHTML=missing+groups.map((g,gi)=>{
+      const m=g.map,size=m.sizeFactor||100,img=m.path?`https://xivapi.com/m/${m.path}.jpg`:'';
+      const start=`<div class="marker start" title="${esc(g.start.name)}" style="left:${markerPos(g.start.x,size)}%;top:${markerPos(g.start.y,size)}%">◆</div>`;
+      const markers=g.items.map((x,i)=>`<div data-material-marker="${x.itemId}" class="marker ${x.point.sourceType==='monster'?'monster':''} ${isTimedPoint(x.point)?'timed-material':''} ${isAcquired(x)?'acquired':''}" title="${esc(item(x.itemId).name)}${isAcquired(x)?'｜已取得':''}${x.point.mobName?`｜${esc(x.point.mobName)}`:''} (${Number(x.point.x).toFixed(1)}, ${Number(x.point.y).toFixed(1)})" style="left:${markerPos(x.point.x,size)}%;top:${markerPos(x.point.y,size)}%">${i+1}</div>`).join('');
+      return `<article class="map-card"><div class="map-head"><h3>${gi+1}. ${esc(m.name)} ${g.urgent?'<span class="pill timed">⏰ 限時優先</span>':''}</h3><div class="muted">從 ${esc(g.start.name)} 出發 · ${g.items.length} 種材料</div></div><div class="map-wrap">${img?`<img src="${esc(img)}" alt="${esc(m.name)}地圖" loading="lazy">`:''}${start}${markers}</div><div class="route"><strong>區內順序</strong><ol>${g.items.map(x=>{const detail=x.point.sourceType==='monster'?`怪物：${esc(x.point.mobName)}${x.point.level?` Lv.${x.point.level}`:''}`:`${esc(x.point.gatheringTypeName||'採集')} Lv.${x.point.level}`;return `<li data-material-route="${x.itemId}" class="${isTimedPoint(x.point)?'timed-material ':''}${isAcquired(x)?'acquired':''}">${materialCheckbox(x)} <span class="cyan">${esc(item(x.itemId).name)} × ${x.qty}</span> ${isTimedPoint(x.point)?'<span class="pill timed">⏰ 限時</span>':''} — ${detail}（${Number(x.point.x).toFixed(1)}, ${Number(x.point.y).toFixed(1)}）${timeText(x.point)}</li>`;}).join('')}</ol></div></article>`;
+    }).join('');
+  }
+  function syncAcquiredUi(itemId){
+    const row=(plan?.procurement||[]).find(x=>Number(x.itemId)===Number(itemId));if(!row)return;
+    const done=isAcquired(row),id=String(Number(itemId));
+    $$(`[data-material-check="${id}"]`).forEach(el=>el.checked=done);
+    $$(`[data-material-row="${id}"],[data-material-route="${id}"],[data-material-marker="${id}"]`).forEach(el=>el.classList.toggle('acquired',done));
+    const progress=acquisitionProgress(),label=$('#gatherProgress');if(label)label.textContent=`${progress.done}／${progress.total}`;
+  }
+  function bindMaterialChecks(){
+    $$('[data-material-check]').forEach(el=>el.addEventListener('change',()=>{const id=String(Number(el.dataset.materialCheck)),row=(plan?.procurement||[]).find(x=>String(x.itemId)===id);if(!row)return;if(el.checked)project.acquired[id]=Number(row.qty);else delete project.acquired[id];saveProject();}));
+    $('#clearAcquiredBtn')?.addEventListener('click',()=>{if(!confirm('確定要清除這份專案的所有材料勾選？'))return;project.acquired={};saveProject();});
+  }
+  function searchItems(q){
+    q=String(q||'').trim().toLocaleLowerCase('zh-Hant'); if(!q||!data)return [];
+    const exact=[],starts=[],contains=[];
+    for(const r of itemRows){const n=String(r[field.name]||''),low=n.toLocaleLowerCase('zh-Hant');if(low===q)exact.push(r);else if(low.startsWith(q))starts.push(r);else if(low.includes(q))contains.push(r);if(exact.length+starts.length+contains.length>80&&exact.length)break;}
+    return [...exact,...starts,...contains].slice(0,12).map(r=>item(Number(r[field.id])));
+  }
+  function showSearch(){
+    const q=$('#itemSearch').value, results=searchItems(q), box=$('#searchResults'); searchSelection=null;
+    if(!q||!data){box.innerHTML='';return;} if(!results.length){box.innerHTML='<div class="empty">找不到相符物品</div>';return;}
+    box.innerHTML=results.map((x,i)=>`<button data-search-pick="${x.id}"><strong>${esc(x.name)}</strong><small>${esc(x.categoryName)} · ID ${x.id}${x.isCraftable?' · 可製作':''}</small></button>`).join('');
+    $$('[data-search-pick]').forEach(el=>el.addEventListener('click',()=>{searchSelection=Number(el.dataset.searchPick);$('#itemSearch').value=item(searchSelection).name;box.innerHTML=`<div class="notice ok">已選擇：${esc(item(searchSelection).name)}</div>`;}));
+  }
+  function addTarget(){
+    if(!data)return alert('請先更新或匯入物品資料。'); const q=$('#itemSearch').value.trim(); let id=searchSelection;
+    if(!id){const exact=searchItems(q).filter(x=>x.name===q);if(exact.length===1)id=exact[0].id;}
+    if(!id){showSearch();return alert('請先從搜尋結果選擇正確物品。');}
+    const qty=Math.max(1,Math.ceil(Number($('#itemQty').value)||1)), found=project.targets.find(x=>x.itemId===id); if(found)found.qty+=qty;else project.targets.push({itemId:id,qty});
+    $('#itemSearch').value='';$('#searchResults').innerHTML='';searchSelection=null;saveProject();
+  }
+  function clearCurrentProject(message){
+    if(!confirm(message))return;
+    project=normalizeProject({seedRevision:Date.now(),title:'籌備任務',targets:[],recipeChoices:{},jobs:{},notes:'',macros:{},acquired:{},crafted:{},routeSettings:{soonMinutes:5}});
+    searchSelection=null;$('#itemSearch').value='';$('#searchResults').innerHTML='';$('#projectNotes').value='';
+    saveProject();if(!data){renderTargets();renderSummary();renderCrafts();renderGather();renderMaps();}
+  }
+  function bindUi(){
+    $('#updateDataBtn').addEventListener('click',updateData);$('#recalcBtn').addEventListener('click',calculate);$('#addTargetBtn').addEventListener('click',addTarget);
+    $('#itemSearch').addEventListener('input',debounce(showSearch,150));$('#itemSearch').addEventListener('keydown',e=>{if(e.key==='Enter')addTarget();});
+    $('#projectNotes').addEventListener('input',debounce(()=>{project.notes=$('#projectNotes').value;saveProject(false);},250));
+    $$('#tabs button').forEach(b=>b.addEventListener('click',()=>{$$('#tabs button').forEach(x=>x.classList.toggle('active',x===b));$$('.tab').forEach(x=>x.classList.toggle('active',x.id==='tab-'+b.dataset.tab));}));
+    $('#exportProjectBtn').addEventListener('click',()=>downloadBlob('FF14_籌備專案.json',JSON.stringify(project,null,2),'application/json'));
+    $('#importProjectBtn').addEventListener('click',()=>$('#projectFile').click());$('#projectFile').addEventListener('change',e=>importProjectFile(e.target.files[0]));
+    $('#exportDataBtn').addEventListener('click',()=>{if(!data)return alert('目前沒有資料可匯出。');downloadBlob('FF14_物品資料快照.json',JSON.stringify({meta:data._meta,payload:data}),'application/json');});
+    $('#importDataBtn').addEventListener('click',()=>$('#dataFile').click());$('#dataFile').addEventListener('change',e=>importDataFile(e.target.files[0]));
+    $('#saveHtmlBtn').addEventListener('click',saveHtmlSnapshot);
+    $('#completeAndClearBtn').addEventListener('click',()=>clearCurrentProject('確定已完成本次籌備並永久清除目前專案嗎？\\n\\n將清除目標品項、加工與採集勾選、配方選擇、備註及其他專案內容，且無法復原。物品資料快照與 BestCraft 配裝不受影響。'));
+    $('#clearProjectBtn').addEventListener('click',()=>clearCurrentProject('確定要永久清空目前籌備專案嗎？\\n\\n所有目標、進度、配方選擇與備註都會清除，且無法復原。'));
+  }
+  function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
+  async function importProjectFile(file){if(!file)return;try{const incoming=JSON.parse(await file.text()),savedRoute=clone(project.routeSettings);project=normalizeProject(incoming);if(!incoming.routeSettings)project.routeSettings=savedRoute;project.seedRevision=Date.now();saveProject();$('#projectNotes').value=project.notes;}catch(e){alert('專案匯入失敗：'+(e.message||e));}finally{$('#projectFile').value='';}}
+  async function importDataFile(file){if(!file)return;setDataStatus('loading','正在匯入資料快照');try{const obj=JSON.parse(await file.text()),payload=obj.payload||obj;data=payload;data._meta=obj.meta||payload._meta||{updatedAt:new Date().toISOString(),source:'import'};if(db)await dbPut('current',{meta:data._meta,payload:data});prepareData();setDataStatus('ready');calculate();}catch(e){setDataStatus('error',String(e.message||e));alert('資料匯入失敗：'+(e.message||e));}finally{$('#dataFile').value='';}}
+  function safeJsonForScript(obj){return JSON.stringify(obj).replace(/</g,'\\u003c');}
+  function saveHtmlSnapshot(){
+    const snapshot=clone(project);snapshot.seedRevision=Date.now();const root=document.documentElement.cloneNode(true),seed=root.querySelector('#project-seed');seed.textContent=safeJsonForScript(snapshot);
+    root.querySelectorAll('.search-results').forEach(x=>x.innerHTML=''); downloadBlob('FF14_籌備任務工作台.html','<!doctype html>\n'+root.outerHTML,'text/html;charset=utf-8');
+  }
+  function downloadBlob(name,content,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  boot();
+})();
+</script>
+</body>
+</html>
